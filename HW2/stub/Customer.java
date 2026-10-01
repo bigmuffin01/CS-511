@@ -2,6 +2,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.ArrayList;
 
 public class Customer implements Runnable {
     private Bakery bakery;
@@ -16,6 +17,15 @@ public class Customer implements Runnable {
      */
     public Customer(Bakery bakery, CountDownLatch l) {
         // TODO
+        System.out.println("Customer initilaizing");
+        this.bakery = bakery;
+        this.doneSignal = l;
+        this.shoppingList = new ArrayList<>();
+        rnd = new Random();
+        fillShoppingList();
+        shopTime = rnd.nextInt(10)+1;
+        checkoutTime = rnd.nextInt(10)+1;
+        System.out.println(toString());
     }
 
     /**
