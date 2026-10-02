@@ -33,6 +33,19 @@ public class Customer implements Runnable {
      */
     public void run() {
         // TODO
+        for (BreadType bread : shoppingList) {
+            try {
+                if (bread == BreadType.RYE) {
+                    bakery.getRye().acquire();
+                } else if (bread == BreadType.SOURDOUGH) {
+                    bakery.getSourdough().acquire();
+                } else {
+                    bakery.getWonder().acquire();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**

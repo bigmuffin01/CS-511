@@ -15,9 +15,22 @@ public class Bakery implements Runnable {
     private CountDownLatch doneSignal = new CountDownLatch(TOTAL_CUSTOMERS);
     // TODO
     private static final Semaphore cashiers = new Semaphore(4);
-    private static final Semaphore rye = new Semaphore(1);
-    private static final Semaphore sourdough = new Semaphore(1);
-    private static final Semaphore wonder = new Semaphore(1);
+    private static final Semaphore waitRye = new Semaphore(1);
+    private static final Semaphore waitSourdough = new Semaphore(1);
+    private static final Semaphore waitWonder = new Semaphore(1);
+
+    public Semaphore getCashiers() {
+        return cashiers;
+    }
+    public Semaphore getRye() {
+        return waitRye;
+    }
+    public Semaphore getSourdough() {
+        return waitSourdough;
+    }
+    public Semaphore getWonder() {
+        return waitWonder;
+    }
 
     /**
      * Remove a loaf from the available breads and restock if necessary
