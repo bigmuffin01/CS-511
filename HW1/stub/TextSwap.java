@@ -1,3 +1,5 @@
+// Name: Tony Yi
+
 import java.io.*;
 import java.util.*;
 
@@ -20,8 +22,11 @@ public class TextSwap {
     }
 
     private static Interval[] getIntervals(int numChunks, int chunkSize) {
-        // TODO: Implement me!
-        return null;
+        Interval[] allIntervals = new Interval[numChunks];
+        for (int i = 0; i < numChunks; i++) {
+            allIntervals[i] = new Interval(i * chunkSize, (i+1) * chunkSize - 1);
+        }
+        return allIntervals;
     }
 
     private static List<Character> getLabels(int numChunks) {
@@ -37,11 +42,20 @@ public class TextSwap {
         return labels;
     }
 
-    private static char[] runSwapper(String content, int chunkSize, int numChunks) {
+    private static char[] runSwapper(String content, int chunkSize, int numChunks) throws Exception {
         List<Character> labels = getLabels(numChunks);
         Interval[] intervals = getIntervals(numChunks, chunkSize);
         // TODO: Order the intervals properly, then run the Swapper instances.
-        return null;
+        Thread[] threads = new Thread[numChunks];
+        char[] charBuffer = new char[chunkSize * numChunks];
+        for (int i = 0; i < numChunks; i++) {
+            threads[i] = new Thread(new Swapper(intervals[labels.get(i) - 'a'], content, charBuffer, chunkSize * i));
+            threads[i].start();
+        }
+        for (int i = 0; i < numChunks; i++) {
+            threads[i].join();
+        }
+        return charBuffer;
     }
 
     private static void writeToFile(String contents, int chunkSize, int numChunks) throws Exception {

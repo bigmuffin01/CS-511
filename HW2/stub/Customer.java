@@ -1,8 +1,8 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-import java.util.ArrayList;
 
 public class Customer implements Runnable {
     private Bakery bakery;
@@ -17,15 +17,13 @@ public class Customer implements Runnable {
      */
     public Customer(Bakery bakery, CountDownLatch l) {
         // TODO
-        System.out.println("Customer initilaizing");
         this.bakery = bakery;
         this.doneSignal = l;
         this.shoppingList = new ArrayList<>();
         rnd = new Random();
         fillShoppingList();
-        shopTime = rnd.nextInt(10)+1;
-        checkoutTime = rnd.nextInt(10)+1;
-        System.out.println(toString());
+        shopTime = rnd.nextInt(200)+1;
+        checkoutTime = rnd.nextInt(50)+1;
     }
 
     /**
@@ -33,19 +31,47 @@ public class Customer implements Runnable {
      */
     public void run() {
         // TODO
-        for (BreadType bread : shoppingList) {
+        System.out.println("Customer "+hashCode()+" now shopping");
+        for (BreadType bread : shoppingList) { // get bread
             try {
                 if (bread == BreadType.RYE) {
                     bakery.getRye().acquire();
+                    Thread.sleep(shopTime);
+                    bakery.takeBread(bread);
+                    System.out.println("Customer "+hashCode()+" took RYE bread");
+                    bakery.getRye().release();
                 } else if (bread == BreadType.SOURDOUGH) {
                     bakery.getSourdough().acquire();
+                    Thread.sleep(shopTime);
+                    bakery.takeBread(bread);
+                    System.out.println("Customer "+hashCode()+" took SOURDOUGH bread");
+                    bakery.getSourdough().release();
                 } else {
                     bakery.getWonder().acquire();
+                    Thread.sleep(shopTime);
+                    bakery.takeBread(bread);
+                    System.out.println("Customer "+hashCode()+" took WONDER bread");
+                    bakery.getWonder().release();
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+        
+        try { // checkout
+            bakery.getCashiers().acquire();
+            Thread.sleep(checkoutTime);
+            System.out.println("Customer "+hashCode()+" buying items");
+            bakery.getMutexSales().acquire(); // mutex for adding sales
+            bakery.addSales(getItemsValue());
+            bakery.getMutexSales().release();
+            bakery.getCashiers().release();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Customer "+hashCode()+" finished");
+        doneSignal.countDown();
     }
 
     /**

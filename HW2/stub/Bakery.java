@@ -1,9 +1,9 @@
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 public class Bakery implements Runnable {
     private static final int TOTAL_CUSTOMERS = 200;
@@ -18,6 +18,7 @@ public class Bakery implements Runnable {
     private static final Semaphore waitRye = new Semaphore(1);
     private static final Semaphore waitSourdough = new Semaphore(1);
     private static final Semaphore waitWonder = new Semaphore(1);
+    private static final Semaphore mutexSales = new Semaphore(1);
 
     public Semaphore getCashiers() {
         return cashiers;
@@ -30,6 +31,9 @@ public class Bakery implements Runnable {
     }
     public Semaphore getWonder() {
         return waitWonder;
+    }
+    public Semaphore getMutexSales() {
+        return mutexSales;
     }
 
     /**
@@ -76,7 +80,7 @@ public class Bakery implements Runnable {
 
         try {
             doneSignal.await();
-            System.out.printf("Total sales = %.2f\\n", sales);
+            System.out.printf("Total sales = %.2f\n", sales);
             executor.shutdown();
         } catch (InterruptedException ie) {
             ie.printStackTrace();
