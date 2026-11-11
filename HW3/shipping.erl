@@ -57,6 +57,7 @@ get_ship_weight(Shipping_State, Ship_ID) ->
     get_container_weight(Shipping_State, maps:get(Ship_ID, Shipping_State#shipping_state.ship_inventory)).
 
 load_ship(Shipping_State, Ship_ID, Container_IDs) ->
+    lists:foreach(fun(ID) -> get_container(Shipping_State, ID) end, Container_IDs),
     Ship_Record = get_ship(Shipping_State, Ship_ID),
     Ship_Port = element(1, get_ship_location(Shipping_State, Ship_ID)),
     Ship_Inv = Shipping_State#shipping_state.ship_inventory,
@@ -97,20 +98,26 @@ unload_ship(Shipping_State, Ship_ID, Container_IDs) ->
     Port_Inv = Shipping_State#shipping_state.port_inventory,
     Cap_Bool = length(Container_IDs) + length(maps:get(Ship_Port, Port_Inv)) =< Port_Record#port.container_cap,
     OnPort_Bool = lists:all(fun(ID) -> not lists:member(ID, maps:get(Ship_Port, Port_Inv)) end, Container_IDs),
-    case OnPort_Bool andalso Cap_Bool of
+    OnShip_Bool = lists:all(fun(ID) -> lists:member(ID, maps:get(Ship_ID, Ship_Inv)) end, Container_IDs),
+    case OnPort_Bool andalso Cap_Bool andalso OnShip_Bool of
         true ->
             {ok, Shipping_State#shipping_state{
                 ship_inventory = maps:update(Ship_ID,lists:subtract(maps:get(Ship_ID,Ship_Inv), Container_IDs),Ship_Inv),
-                port_inventory = maps:update(Ship_Port,lists:append(maps:get(Ship_Port, Port_Inv), Container_IDs), Port_Inv)
-        }};
+                port_inventory = maps:update(Ship_Port,lists:append(maps:get(Ship_Port,Port_Inv), Container_IDs), Port_Inv)
+            }};
         false -> throw(error)
     end.
 
 set_sail(Shipping_State, Ship_ID, {Port_ID, Dock}) ->
-    Unoccupied_Bool = get_ship_location(Shipping_State, Ship_ID) , %% implement
-    Loc_Bool = get_ship_location(Shipping_State, Ship_ID) == {Port_ID, Dock},
+    get_ship(Shipping_State, Ship_ID),
+    get_port(Shipping_State, Port_ID),
+    Unoccupied_Bool = not lists:member(Dock, get_occupied_docks(Shipping_State, Port_ID)),
+    Loc_Bool = element(1, get_ship_location(Shipping_State, Ship_ID)) =/= Port_ID,
     case Unoccupied_Bool andalso Loc_Bool of
-        true -> ok;
+        true ->
+            {ok, Shipping_State#shipping_state {
+                ship_locations = lists:keyreplace(Ship_ID, 3, Shipping_State#shipping_state.ship_locations, {Port_ID, Dock, Ship_ID})
+            }};
         false -> throw(error)
     end.
 
