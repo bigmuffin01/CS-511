@@ -59,7 +59,7 @@ get_ship_weight(Shipping_State, Ship_ID) ->
 load_ship(Shipping_State, Ship_ID, Container_IDs) ->
     case is_sublist(maps:get(Ship_ID, Shipping_State#shipping_state.port_inventory), Container_IDs) of
         true -> true;
-        flase -> throw(error)
+        false -> throw(error)
     end,
     get_container_weight(Shipping_State, Container_IDs),
     io:format("Implement me!!"),
