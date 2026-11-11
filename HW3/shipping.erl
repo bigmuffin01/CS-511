@@ -4,28 +4,53 @@
 -include_lib("./shipping.hrl").
 
 get_ship(Shipping_State, Ship_ID) ->
-    io:format("Implement me!!"),
-    error.
+    case lists:keyfind(Ship_ID, #ship.id, Shipping_State#shipping_state.ships) of
+        false ->
+            throw(error);
+        Ship ->
+            Ship
+    end.
 
 get_container(Shipping_State, Container_ID) ->
-    io:format("Implement me!!"),
-    error.
+    case lists:keyfind(Container_ID, #container.id, Shipping_State#shipping_state.containers) of
+        false ->
+            throw(error);
+        Container ->
+            Container
+    end.
 
 get_port(Shipping_State, Port_ID) ->
-    io:format("Implement me!!"),
-    error.
+    case lists:keyfind(Port_ID, #port.id, Shipping_State#shipping_state.ports) of
+        false ->
+            throw(error);
+        Port ->
+            Port
+    end.
 
 get_occupied_docks(Shipping_State, Port_ID) ->
-    io:format("Implement me!!"),
-    error.
+    lists:filtermap(
+        fun({P, D, _}) ->
+            case P == Port_ID of
+                true -> {true, D};
+                false -> false
+            end
+        end,
+    Shipping_State#shipping_state.ship_locations).
 
 get_ship_location(Shipping_State, Ship_ID) ->
-    io:format("Implement me!!"),
-    error.
+    case lists:keysearch(Ship_ID, 3, Shipping_State#shipping_state.ship_locations) of
+        false ->
+            throw(error);
+        {_, {P, D, _}} ->
+            {P, D}
+    end.
 
 get_container_weight(Shipping_State, Container_IDs) ->
-    io:format("Implement me!!"),
-    error.
+    lists:foldl(
+        fun(ID, Sum) ->
+            Container = get_container(Shipping_State, ID),
+            Sum + Container#container.weight
+        end, 0, Container_IDs).
 
 get_ship_weight(Shipping_State, Ship_ID) ->
     io:format("Implement me!!"),
