@@ -57,27 +57,62 @@ get_ship_weight(Shipping_State, Ship_ID) ->
     get_container_weight(Shipping_State, maps:get(Ship_ID, Shipping_State#shipping_state.ship_inventory)).
 
 load_ship(Shipping_State, Ship_ID, Container_IDs) ->
-    case is_sublist(maps:get(Ship_ID, Shipping_State#shipping_state.port_inventory), Container_IDs) of
+    Ship_Record = get_ship(Shipping_State, Ship_ID),
+    Ship_Port = element(1, get_ship_location(Shipping_State, Ship_ID)),
+    Ship_Inv = Shipping_State#shipping_state.ship_inventory,
+    List_Bool = is_sublist(maps:get(Ship_Port, Shipping_State#shipping_state.port_inventory), Container_IDs),
+    Cap_Bool = length(maps:get(Ship_ID, Ship_Inv)) + length(Container_IDs) =< Ship_Record#ship.container_cap,
+    OnShip_Bool = lists:all(fun(ID) -> not lists:member(ID, maps:get(Ship_ID, Ship_Inv)) end,Container_IDs),
+    Port_Inv = Shipping_State#shipping_state.port_inventory,
+    case List_Bool andalso Cap_Bool andalso OnShip_Bool of
         true ->
-            Weight = get_container_weight(Shipping_State, Container_IDs),
-            lists:append(maps:get(Ship_ID, Shipping_State#shipping_state.ship_inventory), Container_IDs);
+            {ok, Shipping_State#shipping_state{
+                ship_inventory = maps:update(Ship_ID,lists:append(maps:get(Ship_ID, Ship_Inv), Container_IDs),Ship_Inv),
+                port_inventory = maps:update(Ship_Port,lists:subtract(maps:get(Ship_Port, Port_Inv), Container_IDs),Port_Inv)
+            }};
         false -> throw(error)
-    end,
-    get_container_weight(Shipping_State, Container_IDs),
-    io:format("Implement me!!"),
-    error.
+    end.
 
 unload_ship_all(Shipping_State, Ship_ID) ->
-    io:format("Implement me!!"),
-    error.
+    get_ship(Shipping_State, Ship_ID),
+    Ship_Port = element(1, get_ship_location(Shipping_State, Ship_ID)),
+    Port_Record = get_port(Shipping_State, Ship_Port),
+    Ship_Inv = Shipping_State#shipping_state.ship_inventory,
+    Port_Inv = Shipping_State#shipping_state.port_inventory,
+    Cap_Bool = length(maps:get(Ship_Port, Port_Inv))+length(maps:get(Ship_ID, Ship_Inv))=<Port_Record#port.container_cap,
+    case Cap_Bool of
+        true ->
+            {ok, Shipping_State#shipping_state{
+                ship_inventory = maps:update(Ship_ID,[],Ship_Inv),
+                port_inventory = maps:update(Ship_Port,lists:append(maps:get(Ship_Port, Port_Inv),maps:get(Ship_ID, Ship_Inv)),Port_Inv)
+            }};
+        false -> throw(error)
+    end.
 
 unload_ship(Shipping_State, Ship_ID, Container_IDs) ->
-    io:format("Implement me!!"),
-    error.
+    get_ship(Shipping_State, Ship_ID),
+    Ship_Port = element(1, get_ship_location(Shipping_State, Ship_ID)),
+    Port_Record = get_port(Shipping_State, Ship_Port),
+    Ship_Inv = Shipping_State#shipping_state.ship_inventory,
+    Port_Inv = Shipping_State#shipping_state.port_inventory,
+    Cap_Bool = length(Container_IDs) + length(maps:get(Ship_Port, Port_Inv)) =< Port_Record#port.container_cap,
+    OnPort_Bool = lists:all(fun(ID) -> not lists:member(ID, maps:get(Ship_Port, Port_Inv)) end, Container_IDs),
+    case OnPort_Bool andalso Cap_Bool of
+        true ->
+            {ok, Shipping_State#shipping_state{
+                ship_inventory = maps:update(Ship_ID,lists:subtract(maps:get(Ship_ID,Ship_Inv), Container_IDs),Ship_Inv),
+                port_inventory = maps:update(Ship_Port,lists:append(maps:get(Ship_Port, Port_Inv), Container_IDs), Port_Inv)
+        }};
+        false -> throw(error)
+    end.
 
 set_sail(Shipping_State, Ship_ID, {Port_ID, Dock}) ->
-    io:format("Implement me!!"),
-    error.
+    Unoccupied_Bool = get_ship_location(Shipping_State, Ship_ID) , %% implement
+    Loc_Bool = get_ship_location(Shipping_State, Ship_ID) == {Port_ID, Dock},
+    case Unoccupied_Bool andalso Loc_Bool of
+        true -> ok;
+        false -> throw(error)
+    end.
 
 
 
