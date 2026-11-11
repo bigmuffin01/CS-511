@@ -53,10 +53,15 @@ get_container_weight(Shipping_State, Container_IDs) ->
         end, 0, Container_IDs).
 
 get_ship_weight(Shipping_State, Ship_ID) ->
-    io:format("Implement me!!"),
-    error.
+    get_ship(Shipping_State, Ship_ID),
+    get_container_weight(Shipping_State, maps:get(Ship_ID, Shipping_State#shipping_state.ship_inventory)).
 
 load_ship(Shipping_State, Ship_ID, Container_IDs) ->
+    case is_sublist(maps:get(Ship_ID, Shipping_State#shipping_state.port_inventory), Container_IDs) of
+        true -> true;
+        flase -> throw(error)
+    end,
+    get_container_weight(Shipping_State, Container_IDs),
     io:format("Implement me!!"),
     error.
 
