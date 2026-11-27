@@ -50,8 +50,9 @@ do_unregister(State, ClientPID) ->
 
 %% This function should update the nickname of specified client.
 do_update_nick(State, ClientPID, NewNick) ->
-    io:format("chatroom:do_update_nick(...): IMPLEMENT ME~n"),
-    State.
+	NameRegs = maps:put(ClientPID, NewNick, State#chat_st.registrations),
+	State#chat_st{registrations = NameRegs}.
+    %io:format("chatroom:do_update_nick(...): IMPLEMENT ME~n"),
 
 %% This function should update all clients in chatroom with new message
 %% (read assignment specs for details)

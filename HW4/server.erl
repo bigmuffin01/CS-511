@@ -70,8 +70,22 @@ do_leave(ChatName, ClientPID, Ref, State) ->
 
 %% executes new nickname protocol from server perspective
 do_new_nick(State, Ref, ClientPID, NewNick) ->
-    io:format("server:do_new_nick(...): IMPLEMENT ME~n"),
-    State.
+    case lists:member(NewNick, maps:values(State#serv_st.nicks)) of
+		false ->
+			NewNicks = maps:put(ClientPID, NewNick, State#serv_st.nicks),
+			NewState = State#serv_st{nicks = NewNicks},
+			ChatNames = maps:keys(maps:filter(fun(_, Pids) -> lists:member(ClientPID, Pids) end, State#serv_st.registrations)),
+			lists:foreach(fun(ChatName) ->
+				RoomPID = maps:get(ChatName, State#serv_st.chatrooms),
+				RoomPID!{self(), Ref, update_nick, ClientPID, NewNick}
+				end, ChatNames),
+			ClientPID!{self(), Ref, ok_nick},
+			NewState;
+		true ->
+			ClientPID!{self(), Ref, err_nick_used},
+			State
+	end.
+	%io:format("server:do_new_nick(...): IMPLEMENT ME~n"),
 
 %% executes client quit protocol from server perspective
 do_client_quit(State, Ref, ClientPID) ->
