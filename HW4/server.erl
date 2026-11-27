@@ -60,8 +60,24 @@ loop(State) ->
 
 %% executes join protocol from server perspective
 do_join(ChatName, ClientPID, Ref, State) ->
-    io:format("server:do_join(...): IMPLEMENT ME~n"),
-    State.
+	ClientNick = maps:get(ClientPID, State#serv_st.nicks),
+	case maps:is_key(ChatName, State#serv_st.chatrooms) of
+		true ->
+			ChatPID = maps:get(ChatName, State#serv_st.chatrooms),
+			ChatPID!{self(), Ref, register, ClientPID, ClientNick},
+			OldRegs = maps:get(ChatName, State#serv_st.registrations, []),
+			NewRegs = maps:put(ChatName, [ClientPID | OldRegs], State#serv_st.registrations),
+			State#serv_st{registrations = NewRegs};
+		false ->
+			ChatPID = spawn(chatroom, start_chatroom, [ChatName]),
+			ChatPID!{self(), Ref, register, ClientPID, ClientNick},
+			OldRegs = maps:get(ChatName, State#serv_st.registrations, []),
+			NewRegs = maps:put(ChatName, [ClientPID | OldRegs], State#serv_st.registrations),
+			NewChat = maps:put(ChatName, ChatPID, State#serv_st.chatrooms),
+			State#serv_st{chatrooms = NewChat, registrations = NewRegs}
+	end.
+    %io:format("server:do_join(...): IMPLEMENT ME~n"),
+    %State.
 
 %% executes leave protocol from server perspective
 do_leave(ChatName, ClientPID, Ref, State) ->
@@ -76,8 +92,8 @@ do_new_nick(State, Ref, ClientPID, NewNick) ->
 			NewState = State#serv_st{nicks = NewNicks},
 			ChatNames = maps:keys(maps:filter(fun(_, Pids) -> lists:member(ClientPID, Pids) end, State#serv_st.registrations)),
 			lists:foreach(fun(ChatName) ->
-				RoomPID = maps:get(ChatName, State#serv_st.chatrooms),
-				RoomPID!{self(), Ref, update_nick, ClientPID, NewNick}
+				ChatPID = maps:get(ChatName, State#serv_st.chatrooms),
+				ChatPID!{self(), Ref, update_nick, ClientPID, NewNick}
 				end, ChatNames),
 			ClientPID!{self(), Ref, ok_nick},
 			NewState;

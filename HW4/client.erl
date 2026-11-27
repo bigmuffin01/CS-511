@@ -111,8 +111,19 @@ loop(State, Request, Ref) ->
 
 %% executes `/join` protocol from client perspective
 do_join(State, Ref, ChatName) ->
-    io:format("client:do_join(...): IMPLEMENT ME~n"),
-    {{dummy_target, dummy_response}, State}.
+	case maps:is_key(ChatName, State#cl_st.con_ch) of
+		false ->
+			whereis(server)!{self(), Ref, join, ChatName},
+			receive
+				{ChatPID, Ref, connect, History} ->
+					NewState = State#cl_st{con_ch = maps:put(ChatName, ChatPID, State#cl_st.con_ch)},
+					{History, NewState}
+			end;
+		true ->
+			{err, State}
+	end.
+    %io:format("client:do_join(...): IMPLEMENT ME~n"),
+    %{{dummy_target, dummy_response}, State}.
 
 %% executes `/leave` protocol from client perspective
 do_leave(State, Ref, ChatName) ->
